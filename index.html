@@ -291,15 +291,17 @@ $('midi-connect').addEventListener('click',function(){
 });
 function btConnect(all){
   if(!navigator.bluetooth||!navigator.bluetooth.requestDevice){setMidiMsg('이 브라우저는 블루투스 연결을 지원하지 않습니다. 컴퓨터나 안드로이드의 Chrome·Edge에서 열어 주세요. 아이폰·아이패드의 Safari에서는 되지 않습니다.');return;}
+  var st='장치 고르기';
   setMidiMsg('MIDI 어댑터를 찾는 중입니다. 목록에서 Midi Transceiver를 고르세요. 안 보이면 다른 앱에서 어댑터 연결을 끊고 다시 눌러 주세요.');
   navigator.bluetooth.requestDevice(all?{acceptAllDevices:true,optionalServices:[BT_SVC]}:{filters:[{services:[BT_SVC]},{namePrefix:'Midi'},{namePrefix:'MIDI'},{namePrefix:'midi'},{namePrefix:'M-VAVE'},{namePrefix:'SK'},{namePrefix:'WIDI'}],optionalServices:[BT_SVC]}).then(function(d){
-    bt.dev=d;d.addEventListener('gattserverdisconnected',btLost);setMidiMsg('"'+(d.name||'장치')+'"에 연결하는 중입니다…');return d.gatt.connect();
-  }).then(function(g){return g.getPrimaryService(BT_SVC);}).then(function(s){return s.getCharacteristic(BT_CHR);}).then(function(c){
+    bt.dev=d;d.addEventListener('gattserverdisconnected',btLost);setMidiMsg('"'+(d.name||'장치')+'"에 연결하는 중입니다…');st='기기 연결';
+    return d.gatt.connect().catch(function(){return new Promise(function(r){setTimeout(r,800);}).then(function(){return d.gatt.connect();});});
+  }).then(function(g){st='MIDI 서비스 찾기';return g.getPrimaryService(BT_SVC);}).then(function(s){st='MIDI 통로 찾기';return s.getCharacteristic(BT_CHR);}).then(function(c){
     bt.ch=c;bt.q=[];bt.busy=false;setStatus();setMidiMsg('');
   }).catch(function(e){
     bt.ch=null;setStatus();
     var n=e&&e.name;
-    setMidiMsg(n==='NotFoundError'?'장치를 고르지 않았거나 찾지 못했습니다. 어댑터에 불이 들어와 있는지 확인해 주세요.':n==='SecurityError'||n==='NotAllowedError'?'블루투스 권한을 받지 못했습니다. 이 화면이 다른 앱 안에 들어 있으면 막힐 수 있습니다. 받은 파일을 Chrome에서 직접 열어 주세요.':'블루투스 연결에 실패했습니다. 고른 장치가 MIDI 어댑터가 맞는지 확인하고, 다른 앱에서 연결을 끊은 뒤 다시 눌러 주세요.');
+    setMidiMsg(n==='NotFoundError'?'장치를 고르지 않았거나 찾지 못했습니다. 어댑터에 불이 들어와 있는지 확인해 주세요.':n==='SecurityError'||n==='NotAllowedError'?'블루투스 권한을 받지 못했습니다. 이 화면이 다른 앱 안에 들어 있으면 막힐 수 있습니다. 받은 파일을 Chrome에서 직접 열어 주세요.':'블루투스 연결에 실패했습니다. 고른 장치가 MIDI 어댑터가 맞는지 확인하고, 다른 앱에서 연결을 끊은 뒤 다시 눌러 주세요. [멈춘 단계: '+st+' / '+(n||'')+' '+((e&&e.message)||'')+']');
   });
 }
 $('bt-connect').addEventListener('click',function(){btConnect(false);});
