@@ -290,8 +290,8 @@ $('midi-connect').addEventListener('click',function(){
 });
 $('bt-connect').addEventListener('click',function(){
   if(!navigator.bluetooth||!navigator.bluetooth.requestDevice){setMidiMsg('이 브라우저는 블루투스 연결을 지원하지 않습니다. 컴퓨터나 안드로이드의 Chrome·Edge에서 열어 주세요. 아이폰·아이패드의 Safari에서는 되지 않습니다.');return;}
-  setMidiMsg('주변의 블루투스 장치를 찾는 중입니다. 목록에서 MIDI 어댑터(예: Midi Transceiver)를 고르세요. 안 보이면 다른 앱에서 어댑터 연결을 끊고 다시 눌러 주세요.');
-  navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[BT_SVC]}).then(function(d){
+  setMidiMsg('MIDI 어댑터를 찾는 중입니다. 목록에서 Midi Transceiver를 고르세요. 안 보이면 다른 앱에서 어댑터 연결을 끊고 다시 눌러 주세요.');
+  navigator.bluetooth.requestDevice({filters:[{services:[BT_SVC]},{namePrefix:'Midi'},{namePrefix:'MIDI'},{namePrefix:'midi'},{namePrefix:'M-VAVE'},{namePrefix:'SK'},{namePrefix:'WIDI'}],optionalServices:[BT_SVC]}).then(function(d){
     bt.dev=d;d.addEventListener('gattserverdisconnected',btLost);setMidiMsg('"'+(d.name||'장치')+'"에 연결하는 중입니다…');return d.gatt.connect();
   }).then(function(g){return g.getPrimaryService(BT_SVC);}).then(function(s){return s.getCharacteristic(BT_CHR);}).then(function(c){
     bt.ch=c;bt.q=[];bt.busy=false;setStatus();setMidiMsg('');
