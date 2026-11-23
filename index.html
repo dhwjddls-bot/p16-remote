@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>P16 리모트</title>
+<style>
+:root{--bg:#0f1316;--panel:#1a1f23;--panel2:#242b31;--line:#343d45;--ink:#f1f4f2;--mute:#9aa5a8;--acc:#b9f576;--warn:#e9c46a;--danger:#ef7d8b;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+body{padding:0 14px calc(28px + env(safe-area-inset-bottom));max-width:1180px;margin:0 auto}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible,[role=slider]:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 0 14px;border-bottom:1px solid var(--line)}
+.logo{font-weight:800;font-size:22px;letter-spacing:-.02em;margin-right:auto}
+.logo i{color:var(--acc);font-style:normal;margin:0 2px}
+.pill{border:1px solid #6b5a2c;background:#3a3120;color:var(--warn);border-radius:999px;padding:6px 12px;font-size:13px;white-space:nowrap}
+.pill.on{border-color:#4d6b2c;background:#22321a;color:var(--acc)}
+.pill::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:currentColor;margin-right:7px}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px 14px;min-height:42px}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#14200a;font-weight:700}
+.btn.red{background:#4a2930;border-color:#9a4a56;color:#ffb3bd}
+.btn.red.active,.mutebtn.active{background:var(--danger);border-color:var(--danger);color:#2a0b10;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.eyebrow{font:600 11px/1.4 var(--mono);letter-spacing:.28em;color:var(--mute);text-transform:uppercase;margin:18px 0 2px}
+h1{font-size:26px;letter-spacing:-.03em;margin:0 0 12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sec-title{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:20px 0 10px}
+.sec-title b{font:700 12px var(--mono);letter-spacing:.3em;color:var(--mute)}
+.sec-title span{font-size:12px;color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media(min-width:900px){.grid{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.strip{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding-bottom:8px;min-width:0}
+.strip.sel{outline:3px solid var(--acc);outline-offset:1px}
+.strip.off .val,.strip.off .name{opacity:.45}
+.color{width:100%;height:30px;border:0;padding:0}
+.num{font:12px var(--mono);color:var(--mute);margin-top:6px}
+.name{background:none;border:0;font-weight:700;font-size:13px;padding:8px 2px 2px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.val{font:600 17px var(--mono);margin:2px 0 6px;white-space:nowrap}
+.val small{font-size:10px;color:var(--mute);margin-left:3px}
+.fader{position:relative;width:100%;height:150px;touch-action:none;cursor:ns-resize}
+.fader .track{position:absolute;left:50%;top:6px;bottom:6px;width:6px;margin-left:-3px;border-radius:3px;background:#3b444a}
+.fader .fill{position:absolute;left:50%;bottom:6px;width:6px;margin-left:-3px;border-radius:3px;background:#66735b}
+.fader .zero{position:absolute;left:18%;right:18%;border-top:1px dashed #7f9a55}
+.fader .zero::before{content:"0";position:absolute;left:-2px;top:-9px;font:10px var(--mono);color:var(--acc);background:var(--panel);padding-right:2px}
+.fader .thumb{position:absolute;left:50%;width:42px;height:28px;margin-left:-21px;border-radius:7px;background:#8f9c98;border:1px solid #c9d3cf;box-shadow:0 3px 8px #0008}
+.fader .thumb::after{content:"";position:absolute;inset:6px 7px;border-radius:3px;background:#dfe7e3}
+.panlab{font:12px var(--mono);color:var(--mute);margin:4px 0 6px}
+.mutebtn{width:calc(100% - 12px);background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 0;font:600 11px var(--mono);letter-spacing:.14em;min-height:36px}
+.note{font-size:12px;color:var(--mute);margin:10px 0 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px}
+.card.met{background:linear-gradient(160deg,#1e2a1c,#1a1f23 55%);border-color:#44543a}
+.card h2{font-size:22px;margin:0 0 12px;letter-spacing:-.02em}
+.card .cap{font:700 12px var(--mono);letter-spacing:.3em;color:var(--mute);margin:0 0 10px}
+.selhead{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.selhead i{width:6px;height:40px;border-radius:3px;background:var(--acc)}
+.selhead small{display:block;font:12px var(--mono);color:var(--mute);letter-spacing:.08em}
+.selhead input{background:none;border:0;border-bottom:1px dashed var(--line);font-weight:800;font-size:20px;width:100%;padding:0 0 2px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+@media(max-width:420px){.g2.narrow1{grid-template-columns:1fr}}
+.ctl label{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--mute);letter-spacing:.04em;margin-bottom:4px}
+.ctl label b{color:var(--ink);font-weight:500;white-space:nowrap}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:none;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--acc) var(--p,50%),#30373c var(--p,50%))}
+input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:#30373c}
+input[type=range]::-moz-range-progress{height:5px;border-radius:3px;background:var(--acc)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:22px;border-radius:11px;background:#fff;margin-top:-9px;border:0}
+input[type=range]::-moz-range-thumb{width:34px;height:22px;border-radius:11px;background:#fff;border:0}
+.ends{display:flex;justify-content:space-between;font-size:11px;color:var(--mute)}
+.bpm{display:flex;align-items:center;gap:8px}
+.bpm output{font:800 52px/1 var(--mono);color:var(--acc);min-width:3ch;text-align:center}
+.bpm button{width:48px;height:44px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-size:20px}
+select{background:#12171a;border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:42px;width:100%}
+.dots{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.dots span{width:42px;height:42px;border-radius:50%;border:2px solid #4b5a41;display:grid;place-items:center;color:var(--mute);font:14px var(--mono)}
+.dots span.on{border-color:var(--acc);color:var(--acc);background:#2a3a1e}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+details summary{cursor:pointer;color:var(--mute);font-size:13px;letter-spacing:.06em;padding:6px 0}
+.midi{font:12px var(--mono);color:var(--mute);background:#12171a;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:10px;min-height:38px;overflow-wrap:anywhere}
+.msg{font-size:13px;color:var(--warn);margin:8px 0 0}
+dialog{background:#1a2024;color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:20px;max-width:min(560px,calc(100vw - 28px));width:100%;max-height:86vh;overflow:auto}
+dialog::backdrop{background:#000b}
+dialog h3{margin:0 0 10px;font-size:20px}
+dialog p,dialog li{color:#c7cfcc;font-size:14px}
+dialog ol{padding-left:20px;margin:8px 0}
+dialog li{margin-bottom:8px}
+dialog li b{color:var(--ink)}
+.dlg-head{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.slot{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding:8px 0}
+.slot span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot small{color:var(--mute);font-size:11px;display:block}
+.inp{background:#12171a;border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%;min-height:42px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">P16<i>/</i>REMOTE</div>
+  <span class="pill" id="status">데모 · 장비 미연결</span>
+  <button class="btn" id="btn-guide">연결 안내 ↗</button>
+</header>
+
+<p class="eyebrow">Personal Monitor / P16-M · P16-HQ</p>
+<h1>내 귀에 맞는 믹스.</h1>
+<div class="row">
+  <button class="btn" id="btn-save">믹스 저장</button>
+  <button class="btn" id="btn-load">불러오기</button>
+  <button class="btn" id="btn-reset">초기화</button>
+</div>
+<p class="msg" id="topmsg" hidden></p>
+
+<div class="sec-title"><b>CHANNELS 01—16</b><span>상단 색상을 터치해 변경</span></div>
+<div class="grid" id="grid"></div>
+<p class="note">P16 MIDI 범위 · OFF / –51~+12 dB · 0 dB 기준선 · 페이더는 누른 채 위아래로 끌어 조절합니다.</p>
+
+<section class="card" aria-label="선택한 채널">
+  <p class="cap">SELECTED CHANNEL</p>
+  <div class="selhead"><i id="sel-color"></i><div style="flex:1;min-width:0"><small id="sel-num">CHANNEL 01</small><input id="sel-name" aria-label="채널 이름" maxlength="12"></div></div>
+  <p class="cap" style="letter-spacing:.2em;font-weight:400">CHANNEL EQ</p>
+  <div class="g2">
+    <div class="ctl"><label for="eq-lo">LOW · 100 Hz SHELF <b id="eq-lo-v"></b></label><input type="range" id="eq-lo" min="0" max="127" data-ceq="lo"></div>
+    <div class="ctl"><label for="eq-hi">HIGH · 10 kHz SHELF <b id="eq-hi-v"></b></label><input type="range" id="eq-hi" min="0" max="127" data-ceq="hi"></div>
+    <div class="ctl"><label for="eq-mg">MID GAIN <b id="eq-mg-v"></b></label><input type="range" id="eq-mg" min="0" max="127" data-ceq="mg"></div>
+    <div class="ctl"><label for="eq-mf">MID FREQ <b id="eq-mf-v"></b></label><input type="range" id="eq-mf" min="0" max="127" data-ceq="mf"></div>
+  </div>
+  <div class="row" style="margin:10px 0 14px"><button class="btn" id="btn-eqreset">EQ 초기화</button></div>
+  <div class="g2">
+    <div class="ctl"><label for="sel-pan">좌우 위치 <b id="sel-pan-v"></b></label><input type="range" id="sel-pan" min="0" max="127"><div class="ends"><span>L · 왼쪽</span><span>C · CENTER</span><span>오른쪽 · R</span></div></div>
+    <div class="ctl"><label>채널 상태 <b></b></label><button class="btn mutebtn" id="sel-mute" style="width:100%;min-height:46px;font-size:14px">MUTE</button></div>
+  </div>
+</section>
+
+<section class="card met" aria-label="메트로놈">
+  <h2>메트로놈</h2>
+  <div class="g2 narrow1">
+    <div>
+      <div class="bpm"><button id="bpm-dn" aria-label="템포 내리기">–</button><output id="bpm-v">100</output><button id="bpm-up" aria-label="템포 올리기">+</button></div>
+      <input type="range" id="bpm" min="40" max="240" aria-label="템포">
+    </div>
+    <div>
+      <div class="g2">
+        <div class="ctl"><label for="met-beats">한 마디의 박 수</label><select id="met-beats"><option value="2">2박</option><option value="3">3박</option><option value="4">4박</option><option value="6">6박</option></select></div>
+        <div class="ctl"><label for="met-sub">한 박 세분화</label><select id="met-sub"><option value="1">기본박</option><option value="2">8분음표</option><option value="3">셋잇단</option><option value="4">16분음표</option></select></div>
+      </div>
+      <div class="ctl" style="margin-top:10px"><label for="met-vol">클릭 음량 <b id="met-vol-v"></b></label><input type="range" id="met-vol" min="0" max="100"></div>
+    </div>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="row"><button class="btn acc" id="met-go">▶ 시작</button><button class="btn" id="met-tap">탭 템포</button></div>
+  <p class="note">메트로놈 소리는 이 기기에서만 납니다. P16으로 보내지 않습니다.</p>
+</section>
+
+<section class="card" aria-label="메인 믹스">
+  <p class="cap">MAIN MIX</p>
+  <div class="ctl"><label for="main-vol">MAIN <b id="main-vol-v"></b></label><input type="range" id="main-vol" min="0" max="127"><div class="ends"><span>OFF</span><span style="color:var(--acc)">0 dB · UNITY는 4분의 3 지점</span><span>+12 dB</span></div></div>
+  <hr>
+  <div class="ctl"><label for="main-bal">BALANCE <b id="main-bal-v"></b></label><input type="range" id="main-bal" min="0" max="127"><div class="ends"><span>L</span><span>C · CENTER</span><span>R</span></div></div>
+  <details><summary>MAIN EQ</summary>
+    <div class="g2" style="margin-top:8px">
+      <div class="ctl"><label for="m-lo">LOW · 100 Hz <b id="m-lo-v"></b></label><input type="range" id="m-lo" min="0" max="127" data-meq="lo"></div>
+      <div class="ctl"><label for="m-hi">HIGH · 10 kHz <b id="m-hi-v"></b></label><input type="range" id="m-hi" min="0" max="127" data-meq="hi"></div>
+      <div class="ctl"><label for="m-mg">MID GAIN <b id="m-mg-v"></b></label><input type="range" id="m-mg" min="0" max="127" data-meq="mg"></div>
+      <div class="ctl"><label for="m-mf">MID FREQ <b id="m-mf-v"></b></label><input type="range" id="m-mf" min="0" max="127" data-meq="mf"></div>
+    </div>
+  </details>
+  <hr>
+  <div class="ends" style="font-size:13px;margin-bottom:8px"><span style="color:var(--ink);letter-spacing:.06em">OUTPUT / LIMITER</span><span style="color:var(--warn)">본체 조절 · MIDI 미지원</span></div>
+  <button class="btn red" id="main-mute" style="width:100%;min-height:48px;letter-spacing:.1em">MUTE</button>
+</section>
+
+<section class="card" aria-label="장비 연결">
+  <p class="cap">MIDI 연결</p>
+  <div class="row">
+    <button class="btn acc" id="bt-connect">블루투스 MIDI 연결</button>
+    <button class="btn" id="midi-connect">MIDI 장치 연결</button>
+    <div style="flex:1;min-width:180px"><select id="midi-out" aria-label="MIDI 출력 장치" disabled><option value="">출력 장치 없음</option></select></div>
+  </div>
+  <p class="msg" id="midi-msg" hidden></p>
+  <div class="row" style="margin-top:12px">
+    <button class="btn" id="midi-sync">화면 값 전체 보내기</button>
+    <div style="width:110px"><select id="pc-num" aria-label="본체 프리셋 번호"></select></div>
+    <button class="btn" id="pc-send">본체 프리셋 호출</button>
+  </div>
+  <p class="note">P16에는 MIDI OUT이 없어 본체 값을 읽어 올 수 없습니다. 연결한 뒤 '화면 값 전체 보내기'로 화면과 본체를 맞추세요. 소리가 갑자기 커질 수 있으니 이어폰을 빼고 누르세요.</p>
+  <div class="midi" id="midi-log" aria-live="off">보낸 MIDI가 여기에 표시됩니다.</div>
+</section>
+
+<dialog id="dlg-guide">
+  <div class="dlg-head"><h3 id="guide-title">연결 안내</h3><button class="btn" data-close aria-label="닫기">×</button></div>
+  <p>장비가 연결되지 않아도 화면 조작과 믹스 저장을 써 볼 수 있습니다. 연결 전에는 P16 설정이 바뀌지 않습니다.</p>
+  <ol>
+    <li><b>ULTRANET은 오디오 선입니다.</b> P16에 꽂힌 CAT5 케이블은 소리만 전달합니다. 공유기에 연결해 앱으로 조작하는 네트워크가 아닙니다.</li>
+    <li><b>조작은 MIDI로 합니다.</b> P16 뒷면의 5핀 MIDI IN에 블루투스 MIDI 어댑터나 USB-MIDI 인터페이스를 꽂습니다. 블루투스 어댑터는 대부분 MIDI OUT 단자에서 전원을 받는데 P16에는 MIDI IN만 있어, 어댑터에 불이 들어오지 않으면 별도 전원이 필요합니다.</li>
+    <li><b>지원 브라우저가 필요합니다.</b> 이 화면은 브라우저의 블루투스·MIDI 기능으로 신호를 보냅니다. 컴퓨터나 안드로이드의 Chrome·Edge에서 됩니다. 아이폰·아이패드의 Safari는 이 기능이 없어 화면 조작만 됩니다.</li>
+    <li><b>본체 값은 읽어 오지 못합니다.</b> P16에는 MIDI OUT이 없습니다. 연결한 뒤 '화면 값 전체 보내기'로 맞춥니다.</li>
+  </ol>
+  <p>보내는 신호: 채널 1~16은 MIDI 채널 1~16의 CC 7(음량)·10(좌우)·11(켜기/끄기)·21~24(EQ), 메인은 MIDI 채널 1의 CC 31~36, 본체 프리셋은 프로그램 체인지 0~15입니다. Behringer P16-M MIDI 표를 기준으로 했고 실제 장비로는 아직 시험하지 않았습니다. 화면의 dB와 Hz는 표의 범위를 고르게 나눈 표시값이라 본체와 조금 다를 수 있습니다.</p>
+  <p>SOLO·LINK·GROUP, OUTPUT, LIMITER는 MIDI로 조작할 수 없어 본체에서 합니다. 채널 이름·색상·메트로놈은 이 화면에만 있는 보조 기능입니다.</p>
+</dialog>
+
+<dialog id="dlg-save">
+  <div class="dlg-head"><h3>믹스 저장</h3><button class="btn" data-close aria-label="닫기">×</button></div>
+  <label for="save-name" style="font-size:13px;color:var(--mute)">이름</label>
+  <input class="inp" id="save-name" maxlength="24" placeholder="예: 주일 2부">
+  <p class="msg" id="save-msg" hidden></p>
+  <div class="row" style="margin-top:12px"><button class="btn acc" id="save-go">저장</button></div>
+  <p class="note">이 기기의 이 브라우저에만 저장됩니다.</p>
+</dialog>
+
+<dialog id="dlg-load">
+  <div class="dlg-head"><h3>불러오기</h3><button class="btn" data-close aria-label="닫기">×</button></div>
+  <div id="slots"></div>
+  <p class="note">불러오면 화면 값만 바뀝니다. 장비에 보내려면 'MIDI 연결'의 '화면 값 전체 보내기'를 누르세요.</p>
+</dialog>
+
+<dialog id="dlg-confirm">
+  <h3 id="cf-title"></h3>
+  <p id="cf-text"></p>
+  <div class="row"><button class="btn acc" id="cf-ok">확인</button><button class="btn" data-close>취소</button></div>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+var NAMES=['리드 보컬','보컬 2','보컬 3','어쿠스틱','일렉 기타','키보드 L','키보드 R','베이스','킥','스네어','드럼 L','드럼 R','트랙 L','트랙 R','클릭','토크백'];
+var COLORS=['#b9f576','#7cc8ee','#b59be8','#eba77d','#ea8098','#72d8c0','#f0d970','#c9d0d4'];
+var DEFCOL=[0,0,0,1,1,1,2,2,2,3,3,3,4,4,4,5];
+var $=function(id){return document.getElementById(id);};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fresh(){
+  return {sel:0,ch:NAMES.map(function(n,i){return {name:n,color:DEFCOL[i],vol:43,pan:64,on:true,lo:64,mg:64,mf:64,hi:64};}),
+    main:{vol:63,bal:64,lo:64,mg:64,mf:64,hi:64,mute:false},met:{bpm:100,beats:4,sub:1,vol:30}};
+}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){return false;}}
+function load(k){try{var s=localStorage.getItem(k);return s?JSON.parse(s):null;}catch(e){return null;}}
+function valid(s){return s&&Array.isArray(s.ch)&&s.ch.length===16&&s.main&&s.met;}
+var S=load('p16-state');if(!valid(S))S=fresh();
+var saveT=0;function autosave(){clearTimeout(saveT);saveT=setTimeout(function(){store('p16-state',S);},300);}
+
+/* 표시값: MIDI 표의 범위를 고르게 나눈 값 */
+function volText(v){if(v<=0)return 'OFF';var d=-51+(v-1)*0.5;return (d>0?'+':d<0?'–':'')+Math.abs(d).toFixed(d%1?1:0);}
+function gainText(v){var d=v>=64?(v-64)*12/63:(v-64)*12/64;d=Math.round(d*2)/2;return (d>0?'+':d<0?'–':'')+Math.abs(d)+' dB';}
+function freqText(v,lo,hi){var f=lo*Math.pow(hi/lo,v/127);return f>=1000?(Math.round(f/100)/10)+' kHz':Math.round(f/10)*10+' Hz';}
+function panText(v){if(v===64)return 'C';return v<64?'L'+Math.round((64-v)/64*100):'R'+Math.round((v-64)/63*100);}
+
+/* MIDI */
+var midi={access:null,out:null};
+/* 블루투스 MIDI(BLE-MIDI): 어댑터에 직접 연결합니다 */
+var BT_SVC='03b80e5a-ede8-4b51-8f6f-809c1bbd4d2b',BT_CHR='7772e5db-3868-4112-a1a9-f2669d106bf3';
+var bt={dev:null,ch:null,q:[],busy:false};
+function connected(){return !!(bt.ch||midi.out);}
+function btQueue(bytes){
+  var key=bytes.length===3?(bytes[0]<<8|bytes[1]):-1;
+  if(key>=0){for(var i=0;i<bt.q.length;i++){if(bt.q[i].key===key){bt.q[i].bytes=bytes;btPump();return;}}}
+  bt.q.push({key:key,bytes:bytes});btPump();
+}
+function btPump(){
+  if(bt.busy||!bt.ch||!bt.q.length)return;
+  var m=bt.q.shift(),t=Math.floor(performance.now())&8191,pkt=new Uint8Array([0x80|(t>>7),0x80|(t&127)].concat(m.bytes));
+  bt.busy=true;
+  var w=bt.ch.writeValueWithoutResponse?bt.ch.writeValueWithoutResponse(pkt):bt.ch.writeValue(pkt);
+  Promise.resolve(w).then(function(){bt.busy=false;btPump();},function(){bt.busy=false;bt.q=[];setMidiMsg('블루투스로 보내지 못했습니다. 어댑터 전원과 거리를 확인하고 다시 연결해 주세요.');});
+}
+function btLost(){bt.ch=null;bt.q=[];bt.busy=false;setStatus();setMidiMsg('블루투스 연결이 끊어졌습니다. 다시 연결해 주세요.');}
+function hex(b){return b.map(function(x){return ('0'+x.toString(16).toUpperCase()).slice(-2);}).join(' ');}
+function send(bytes,label){
+  var sent=false;
+  if(bt.ch){btQueue(bytes);sent=true;}
+  else if(midi.out){try{midi.out.send(bytes);sent=true;}catch(e){setMidiMsg('MIDI를 보내지 못했습니다. 장치 연결을 확인해 주세요.');}}
+  $('midi-log').textContent=(sent?'보냄 ':'데모(전송 안 함) ')+hex(bytes)+' · '+label;
+}
+function sendCh(i,cc,v,label){send([0xB0|i,cc,v],'채널 '+(i+1)+' '+label);}
+function sendMain(cc,v,label){send([0xB0,cc,v],'메인 '+label);}
+var CEQ={lo:21,mg:22,mf:23,hi:24},MEQ={lo:31,mg:32,mf:33,hi:34};
+function setMidiMsg(t){var m=$('midi-msg');m.textContent=t||'';m.hidden=!t;}
+function setStatus(){var p=$('status');if(bt.ch){p.textContent='블루투스 연결 · '+((bt.dev&&bt.dev.name)||'MIDI 어댑터');p.classList.add('on');}else if(midi.out){p.textContent='MIDI 연결 · '+(midi.out.name||'출력 장치');p.classList.add('on');}else{p.textContent='데모 · 장비 미연결';p.classList.remove('on');}}
+function fillOuts(){
+  var sel=$('midi-out'),outs=[];midi.access.outputs.forEach(function(o){outs.push(o);});
+  sel.innerHTML=outs.length?outs.map(function(o){return '<option value="'+esc(o.id)+'">'+esc(o.name||o.id)+'</option>';}).join(''):'<option value="">출력 장치 없음</option>';
+  sel.disabled=!outs.length;
+  var keep=midi.out&&outs.filter(function(o){return o.id===midi.out.id;})[0];
+  midi.out=keep||outs[0]||null;if(midi.out)sel.value=midi.out.id;
+  setMidiMsg(outs.length?'':'MIDI 출력 장치가 보이지 않습니다. USB-MIDI 인터페이스를 연결한 뒤 다시 눌러 주세요.');
+  setStatus();
+}
+$('midi-connect').addEventListener('click',function(){
+  if(!navigator.requestMIDIAccess){setMidiMsg('이 브라우저는 MIDI 연결을 지원하지 않습니다. 컴퓨터나 안드로이드의 Chrome·Edge에서 열어 주세요. 아이폰·아이패드에서는 화면 조작만 됩니다.');return;}
+  setMidiMsg('MIDI 권한을 요청하는 중입니다…');
+  navigator.requestMIDIAccess({sysex:false}).then(function(a){midi.access=a;a.onstatechange=fillOuts;fillOuts();},function(){setMidiMsg('MIDI 권한을 받지 못했습니다. 이 화면이 다른 앱 안에 들어 있으면 막힐 수 있습니다. 받은 파일을 Chrome에서 직접 열어 주세요.');});
+});
+$('bt-connect').addEventListener('click',function(){
+  if(!navigator.bluetooth||!navigator.bluetooth.requestDevice){setMidiMsg('이 브라우저는 블루투스 연결을 지원하지 않습니다. 컴퓨터나 안드로이드의 Chrome·Edge에서 열어 주세요. 아이폰·아이패드의 Safari에서는 되지 않습니다.');return;}
+  setMidiMsg('주변의 블루투스 MIDI 장치를 찾는 중입니다…');
+  navigator.bluetooth.requestDevice({filters:[{services:[BT_SVC]}]}).then(function(d){
+    bt.dev=d;d.addEventListener('gattserverdisconnected',btLost);setMidiMsg('"'+(d.name||'장치')+'"에 연결하는 중입니다…');return d.gatt.connect();
+  }).then(function(g){return g.getPrimaryService(BT_SVC);}).then(function(s){return s.getCharacteristic(BT_CHR);}).then(function(c){
+    bt.ch=c;bt.q=[];bt.busy=false;setStatus();setMidiMsg('');
+  }).catch(function(e){
+    bt.ch=null;setStatus();
+    var n=e&&e.name;
+    setMidiMsg(n==='NotFoundError'?'장치를 고르지 않았거나 찾지 못했습니다. 어댑터에 불이 들어와 있는지 확인해 주세요.':n==='SecurityError'||n==='NotAllowedError'?'블루투스 권한을 받지 못했습니다. 이 화면이 다른 앱 안에 들어 있으면 막힐 수 있습니다. 받은 파일을 Chrome에서 직접 열어 주세요.':'블루투스 연결에 실패했습니다. 어댑터를 다른 기기에서 연결 해제한 뒤 다시 눌러 주세요.');
+  });
+});
+$('midi-out').addEventListener('change',function(e){if(!midi.access)return;var id=e.target.value;midi.out=null;midi.access.outputs.forEach(function(o){if(o.id===id)midi.out=o;});setStatus();});
+
+/* 채널 스트립 */
+var grid=$('grid');
+function buildGrid(){
+  grid.innerHTML=S.ch.map(function(c,i){
+    return '<div class="strip" data-i="'+i+'"><button class="color" data-color aria-label="채널 '+(i+1)+' 색상 바꾸기"></button>'
+     +'<div class="num">'+('0'+(i+1)).slice(-2)+'</div><button class="name" data-pick></button>'
+     +'<div class="val"><span data-v></span><small>dB</small></div>'
+     +'<div class="fader" role="slider" tabindex="0" aria-label="채널 '+(i+1)+' 음량" aria-valuemin="0" aria-valuemax="127"><div class="track"></div><div class="fill"></div><div class="zero"></div><div class="thumb"></div></div>'
+     +'<div class="panlab" data-pan></div><button class="mutebtn" data-mute>MUTE</button></div>';
+  }).join('');
+}
+var FH=150,TH=28,PADY=6;
+function yOf(v){return PADY+(v/127)*(FH-TH-PADY*2);}
+function paintStrip(i){
+  var c=S.ch[i],el=grid.children[i];
+  el.classList.toggle('sel',S.sel===i);el.classList.toggle('off',!c.on);
+  el.querySelector('[data-color]').style.background=COLORS[c.color];
+  var nm=el.querySelector('[data-pick]');nm.textContent=c.name;nm.setAttribute('aria-label','채널 '+(i+1)+' '+c.name+' 선택');
+  el.querySelector('[data-v]').textContent=volText(c.vol);
+  el.querySelector('.val small').style.display=c.vol?'':'none';
+  var f=el.querySelector('.fader');f.setAttribute('aria-valuenow',c.vol);f.setAttribute('aria-valuetext',volText(c.vol)+(c.vol?' dB':''));
+  f.querySelector('.thumb').style.bottom=yOf(c.vol)+'px';
+  f.querySelector('.fill').style.height=(yOf(c.vol)+TH/2-PADY)+'px';
+  f.querySelector('.zero').style.bottom=(yOf(103)+TH/2)+'px';
+  el.querySelector('[data-pan]').textContent=panText(c.pan);
+  var mb=el.querySelector('[data-mute]');mb.classList.toggle('active',!c.on);mb.setAttribute('aria-pressed',String(!c.on));
+}
+function setRange(el,v){el.value=v;el.style.setProperty('--p',((v-el.min)/(el.max-el.min)*100)+'%');}
+function paintSel(){
+  var c=S.ch[S.sel];
+  $('sel-color').style.background=COLORS[c.color];$('sel-num').textContent='CHANNEL '+('0'+(S.sel+1)).slice(-2);
+  if(document.activeElement!==$('sel-name'))$('sel-name').value=c.name;
+  ['lo','hi','mg'].forEach(function(k){setRange($('eq-'+k),c[k]);$('eq-'+k+'-v').textContent=gainText(c[k]);});
+  setRange($('eq-mf'),c.mf);$('eq-mf-v').textContent=freqText(c.mf,150,9000);
+  setRange($('sel-pan'),c.pan);$('sel-pan-v').textContent=panText(c.pan);
+  var mb=$('sel-mute');mb.classList.toggle('active',!c.on);mb.textContent=c.on?'MUTE':'MUTE 켜짐';mb.setAttribute('aria-pressed',String(!c.on));
+}
+function paintMain(){
+  var m=S.main;
+  setRange($('main-vol'),m.vol);$('main-vol-v').textContent=volText(m.vol)+(m.vol?' dB':'');
+  setRange($('main-bal'),m.bal);$('main-bal-v').textContent=panText(m.bal);
+  ['lo','hi','mg'].forEach(function(k){setRange($('m-'+k),m[k]);$('m-'+k+'-v').textContent=gainText(m[k]);});
+  setRange($('m-mf'),m.mf);$('m-mf-v').textContent=freqText(m.mf,100,10000);
+  var b=$('main-mute');b.classList.toggle('active',m.mute);b.textContent=m.mute?'전체 MUTE 켜짐 · 눌러서 해제':'MUTE';b.setAttribute('aria-pressed',String(m.mute));
+}
+function paintAll(){for(var i=0;i<16;i++)paintStrip(i);paintSel();paintMain();paintMet();}
+function select(i){var o=S.sel;S.sel=i;paintStrip(o);paintStrip(i);paintSel();autosave();}
+function setVol(i,v){v=Math.max(0,Math.min(127,Math.round(v)));var c=S.ch[i];if(c.vol===v)return;c.vol=v;paintStrip(i);sendCh(i,7,v,'음량 '+volText(v));autosave();}
+function toggleMute(i){var c=S.ch[i];c.on=!c.on;paintStrip(i);if(i===S.sel)paintSel();sendCh(i,11,c.on?127:0,c.on?'켜기':'음소거');autosave();}
+
+grid.addEventListener('click',function(e){
+  var st=e.target.closest('.strip');if(!st)return;var i=+st.getAttribute('data-i');
+  if(e.target.closest('[data-color]')){S.ch[i].color=(S.ch[i].color+1)%COLORS.length;paintStrip(i);if(i===S.sel)paintSel();autosave();return;}
+  if(e.target.closest('[data-mute]')){toggleMute(i);return;}
+  if(e.target.closest('[data-pick]')){select(i);}
+});
+/* 페이더: 누른 자리에서 값이 튀지 않도록 끈 거리만큼만 바꿉니다 */
+var drag=null;
+grid.addEventListener('pointerdown',function(e){
+  var f=e.target.closest('.fader');if(!f)return;var i=+f.parentNode.getAttribute('data-i');
+  if(S.sel!==i)select(i);
+  drag={i:i,y:e.clientY,v:S.ch[i].vol,id:e.pointerId};try{f.setPointerCapture(e.pointerId);}catch(x){}
+  e.preventDefault();
+});
+grid.addEventListener('pointermove',function(e){
+  if(!drag||e.pointerId!==drag.id)return;
+  setVol(drag.i,drag.v+(drag.y-e.clientY)/(FH-TH-PADY*2)*127);
+});
+function endDrag(e){if(drag&&e.pointerId===drag.id)drag=null;}
+grid.addEventListener('pointerup',endDrag);grid.addEventListener('pointercancel',endDrag);
+grid.addEventListener('keydown',function(e){
+  var f=e.target.closest('.fader');if(!f)return;var i=+f.parentNode.getAttribute('data-i'),d=0;
+  if(e.key==='ArrowUp'||e.key==='ArrowRight')d=1;else if(e.key==='ArrowDown'||e.key==='ArrowLeft')d=-1;else if(e.key==='PageUp')d=8;else if(e.key==='PageDown')d=-8;else return;
+  e.preventDefault();if(S.sel!==i)select(i);setVol(i,S.ch[i].vol+d);
+});
+
+/* 선택한 채널 */
+$('sel-name').addEventListener('input',function(e){S.ch[S.sel].name=e.target.value.trim()||NAMES[S.sel];paintStrip(S.sel);autosave();});
+document.querySelectorAll('[data-ceq]').forEach(function(el){el.addEventListener('input',function(){
+  var k=el.getAttribute('data-ceq'),v=+el.value;S.ch[S.sel][k]=v;paintSel();sendCh(S.sel,CEQ[k],v,'EQ '+k.toUpperCase());autosave();});});
+$('btn-eqreset').addEventListener('click',function(){var c=S.ch[S.sel];['lo','mg','mf','hi'].forEach(function(k){c[k]=64;sendCh(S.sel,CEQ[k],64,'EQ 초기화');});paintSel();autosave();});
+$('sel-pan').addEventListener('input',function(e){var v=+e.target.value;if(Math.abs(v-64)<=2)v=64;S.ch[S.sel].pan=v;paintSel();paintStrip(S.sel);sendCh(S.sel,10,v,'좌우 '+panText(v));autosave();});
+$('sel-mute').addEventListener('click',function(){toggleMute(S.sel);});
+
+/* 메인 */
+$('main-vol').addEventListener('input',function(e){S.main.vol=+e.target.value;paintMain();if(!S.main.mute)sendMain(35,S.main.vol,'음량 '+volText(S.main.vol));autosave();});
+$('main-bal').addEventListener('input',function(e){var v=+e.target.value;if(Math.abs(v-64)<=2)v=64;S.main.bal=v;paintMain();sendMain(36,v,'밸런스 '+panText(v));autosave();});
+document.querySelectorAll('[data-meq]').forEach(function(el){el.addEventListener('input',function(){
+  var k=el.getAttribute('data-meq'),v=+el.value;S.main[k]=v;paintMain();sendMain(MEQ[k],v,'EQ '+k.toUpperCase());autosave();});});
+$('main-mute').addEventListener('click',function(){S.main.mute=!S.main.mute;paintMain();sendMain(35,S.main.mute?0:S.main.vol,S.main.mute?'전체 음소거':'음소거 해제 '+volText(S.main.vol));autosave();});
+
+/* 전체 보내기 · 프리셋 */
+function syncAll(){
+  var q=[];q.push([[0xB0,35,0],'메인 잠시 내림']);
+  S.ch.forEach(function(c,i){[[7,c.vol],[10,c.pan],[11,c.on?127:0],[21,c.lo],[22,c.mg],[23,c.mf],[24,c.hi]].forEach(function(p){q.push([[0xB0|i,p[0],p[1]],'채널 '+(i+1)]);});});
+  [[31,S.main.lo],[32,S.main.mg],[33,S.main.mf],[34,S.main.hi],[36,S.main.bal]].forEach(function(p){q.push([[0xB0,p[0],p[1]],'메인']);});
+  q.push([[0xB0,35,S.main.mute?0:S.main.vol],'메인 음량 '+(S.main.mute?'음소거 유지':volText(S.main.vol))]);
+  var n=0;(function step(){if(n>=q.length){$('midi-log').textContent=(connected()?'전체 보냄 · ':'데모(전송 안 함) · ')+q.length+'개 메시지';return;}send(q[n][0],q[n][1]);n++;setTimeout(step,bt.ch?12:4);})();
+}
+var cfAct=null;
+function confirmDo(title,text,fn){$('cf-title').textContent=title;$('cf-text').textContent=text;cfAct=fn;$('dlg-confirm').showModal();}
+$('cf-ok').addEventListener('click',function(){$('dlg-confirm').close();if(cfAct)cfAct();cfAct=null;});
+$('midi-sync').addEventListener('click',function(){confirmDo('화면 값을 P16으로 보낼까요?','본체의 16채널과 메인 값이 화면 값으로 바뀝니다. 소리가 갑자기 달라질 수 있으니 이어폰을 빼고 진행하세요.'+(connected()?'':' 지금은 장비가 연결되지 않아 실제로 보내지지 않습니다.'),syncAll);});
+$('pc-num').innerHTML=Array.from({length:16},function(_,i){return '<option value="'+i+'">프리셋 '+(i+1)+'</option>';}).join('');
+$('pc-send').addEventListener('click',function(){var n=+$('pc-num').value;confirmDo('본체 프리셋 '+(n+1)+'을 불러올까요?','P16 본체에 저장된 프리셋으로 바뀝니다. 본체 값은 읽어 올 수 없어 화면 값과 달라집니다.',function(){send([0xC0,n],'본체 프리셋 '+(n+1)+' 호출');});});
+
+/* 저장 · 불러오기 · 초기화 */
+function topMsg(t){var m=$('topmsg');m.textContent=t;m.hidden=!t;if(t)setTimeout(function(){if(m.textContent===t)m.hidden=true;},5000);}
+$('btn-save').addEventListener('click',function(){$('save-msg').hidden=true;$('save-name').value='';$('dlg-save').showModal();});
+$('save-go').addEventListener('click',function(){
+  var n=$('save-name').value.trim(),m=$('save-msg');if(!n){m.textContent='이름을 적어 주세요.';m.hidden=false;return;}
+  var all=load('p16-mixes')||{};all[n]={at:Date.now(),s:JSON.parse(JSON.stringify(S))};
+  if(!store('p16-mixes',all)){m.textContent='이 화면에서는 저장할 수 없습니다.';m.hidden=false;return;}
+  $('dlg-save').close();topMsg('"'+n+'" 믹스를 저장했습니다.');
+});
+function paintSlots(){
+  var all=load('p16-mixes')||{},ks=Object.keys(all).sort(function(a,b){return all[b].at-all[a].at;});
+  $('slots').innerHTML=ks.length?ks.map(function(k){var d=new Date(all[k].at);return '<div class="slot"><span>'+esc(k)+'<small>'+(d.getMonth()+1)+'월 '+d.getDate()+'일 저장</small></span><button class="btn" data-open="'+esc(k)+'">불러오기</button><button class="btn red" data-del="'+esc(k)+'">삭제</button></div>';}).join(''):'<p>저장한 믹스가 없습니다. 먼저 "믹스 저장"으로 저장해 주세요.</p>';
+}
+$('btn-load').addEventListener('click',function(){paintSlots();$('dlg-load').showModal();});
+$('slots').addEventListener('click',function(e){
+  var o=e.target.closest('[data-open]'),d=e.target.closest('[data-del]'),all=load('p16-mixes')||{};
+  if(o){var k=o.getAttribute('data-open');if(valid(all[k]&&all[k].s)){S=JSON.parse(JSON.stringify(all[k].s));paintAll();autosave();$('dlg-load').close();topMsg('"'+k+'" 믹스를 화면에 불러왔습니다.'+(connected()?' 장비에는 아직 보내지 않았습니다.':''));}}
+  if(d){delete all[d.getAttribute('data-del')];store('p16-mixes',all);paintSlots();}
+});
+$('btn-reset').addEventListener('click',function(){confirmDo('화면 값을 초기화할까요?','채널 이름·색상·음량·EQ가 처음 값으로 돌아갑니다. 저장해 둔 믹스는 지워지지 않고, 장비에는 보내지 않습니다.',function(){var sel=S.sel;S=fresh();S.sel=sel;paintAll();autosave();topMsg('화면 값을 초기화했습니다.');});});
+$('btn-guide').addEventListener('click',function(){$('dlg-guide').showModal();});
+document.querySelectorAll('[data-close]').forEach(function(b){b.addEventListener('click',function(){b.closest('dialog').close();});});
+
+/* 메트로놈 */
+var ac=null,metOn=false,nextT=0,tick=0,timer=0,taps=[];
+function paintMet(){
+  var m=S.met;$('bpm-v').textContent=m.bpm;setRange($('bpm'),m.bpm);$('met-beats').value=m.beats;$('met-sub').value=m.sub;
+  setRange($('met-vol'),m.vol);$('met-vol-v').textContent=m.vol+'%';
+  $('dots').innerHTML=Array.from({length:m.beats},function(_,i){return '<span>'+(i+1)+'</span>';}).join('');
+  $('met-go').textContent=metOn?'■ 정지':'▶ 시작';
+}
+function click(t,kind){
+  var o=ac.createOscillator(),g=ac.createGain(),v=S.met.vol/100;
+  o.frequency.value=kind===0?1500:kind===1?1000:700;
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(0.0002,v*(kind===2?0.5:1)),t+0.002);g.gain.exponentialRampToValueAtTime(0.0001,t+0.05);
+  o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+0.06);
+}
+function sched(){
+  var m=S.met,step=60/m.bpm/m.sub;
+  while(nextT<ac.currentTime+0.12){
+    var beat=Math.floor(tick/m.sub)%m.beats,sub=tick%m.sub;
+    click(nextT,sub?2:(beat?1:0));
+    if(!sub){(function(b,at){setTimeout(function(){var d=$('dots').children;for(var i=0;i<d.length;i++)d[i].classList.toggle('on',i===b&&metOn);},Math.max(0,(at-ac.currentTime)*1000));})(beat,nextT);}
+    nextT+=step;tick++;
+  }
+}
+$('met-go').addEventListener('click',function(){
+  if(metOn){metOn=false;clearInterval(timer);paintMet();return;}
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume();}catch(e){topMsg('이 브라우저에서는 메트로놈 소리를 낼 수 없습니다.');return;}
+  metOn=true;tick=0;nextT=ac.currentTime+0.06;timer=setInterval(sched,25);sched();paintMet();
+});
+function setBpm(v){S.met.bpm=Math.max(40,Math.min(240,Math.round(v)));paintMetLight();autosave();}
+function paintMetLight(){$('bpm-v').textContent=S.met.bpm;setRange($('bpm'),S.met.bpm);}
+$('bpm').addEventListener('input',function(e){setBpm(+e.target.value);});
+$('bpm-dn').addEventListener('click',function(){setBpm(S.met.bpm-1);});
+$('bpm-up').addEventListener('click',function(){setBpm(S.met.bpm+1);});
+$('met-beats').addEventListener('change',function(e){S.met.beats=+e.target.value;tick=0;paintMet();autosave();});
+$('met-sub').addEventListener('change',function(e){S.met.sub=+e.target.value;tick=0;autosave();});
+$('met-vol').addEventListener('input',function(e){S.met.vol=+e.target.value;setRange(e.target,S.met.vol);$('met-vol-v').textContent=S.met.vol+'%';autosave();});
+$('met-tap').addEventListener('click',function(){
+  var n=performance.now();if(taps.length&&n-taps[taps.length-1]>2000)taps=[];taps.push(n);if(taps.length>6)taps.shift();
+  if(taps.length>=2)setBpm(60000/((taps[taps.length-1]-taps[0])/(taps.length-1)));
+});
+
+buildGrid();paintAll();setStatus();
+})();
+</script>
+</body>
+</html>
